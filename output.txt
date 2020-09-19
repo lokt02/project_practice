@@ -1,0 +1,9 @@
+Express x = 10 as a plaintext polynomial 0x10.
+10
+
+x^2 + 1
+101
+x + 6
+16
+x * 6
+60
