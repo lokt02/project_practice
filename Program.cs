@@ -71,7 +71,18 @@ namespace homomorphic_encryption
             Console.WriteLine("x * 6");
             Console.WriteLine(multipleValue);
 
-            
+            Plaintext plainFour = new Plaintext("4");
+            Plaintext plainValue = new Plaintext();
+            evaluator.MultiplyPlainInplace(multipleValueEncrypted, plainFour);
+            decryptor.Decrypt(multipleValueEncrypted, plainValue);
+            Console.WriteLine("x * 6 * 4 (but 4 is plaintext)");
+            Console.WriteLine(plainValue);
+            //Plaintext plainFour = new Plaintext("4");
+            //Plaintext xValue = new Plaintext();
+            //evaluator.MultiplyPlainInplace(xEncrypted, plainFour);
+            //decryptor.Decrypt(xEncrypted, xValue);
+            //Console.WriteLine("x * 4 (but 4 is plaintext)");
+            //Console.WriteLine(xValue);
         }
     }
 }
