@@ -7,3 +7,5 @@ x + 6
 16
 x * 6
 60
+x * 6 * 4 (but 4 is plaintext)
+180
