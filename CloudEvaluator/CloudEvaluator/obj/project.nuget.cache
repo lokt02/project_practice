@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "PgZVRWrKm9CBNUTMj8T0+10Pbi6OHCurkRrB5w4xtwz3e+uDCfKkgYysacgzmNJkE8ljqU5FJ6shZ7m3o4EP+g==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Сергей\\source\\repos\\CloudEvaluator\\CloudEvaluator\\CloudEvaluator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Сергей\\.nuget\\packages\\mathosparser\\2.0.0\\mathosparser.2.0.0.nupkg.sha512",
+    "C:\\Users\\Сергей\\.nuget\\packages\\microsoft.research.sealnet\\3.5.9\\microsoft.research.sealnet.3.5.9.nupkg.sha512"
+  ],
+  "logs": []
+}
