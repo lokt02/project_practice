@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Microsoft.Research.SEAL;
 
 namespace homomorphic_encryption
@@ -10,11 +11,12 @@ namespace homomorphic_encryption
             EncryptionParameters parms = new EncryptionParameters(SchemeType.BFV);
             parms.PolyModulusDegree = 4096;
             parms.CoeffModulus = CoeffModulus.BFVDefault(4096);
-            parms.PlainModulus = new Modulus(1024);
+            parms.PlainModulus = new Modulus(4096 * 2);
 
 
             SEALContext context = new SEALContext(new EncryptionParameters(parms));
 
+            Console.WriteLine(context.ParameterErrorMessage());
             KeyGenerator keygen = new KeyGenerator(context);
             PublicKey publicKey = new PublicKey(keygen.PublicKey);
             SecretKey secretKey = new SecretKey(keygen.SecretKey);
@@ -25,64 +27,96 @@ namespace homomorphic_encryption
 
             Decryptor decryptor = new Decryptor(context, secretKey);
 
-            int x = 10;
+
+            Console.WriteLine("Generate locally usable relinearization keys.");
+            using RelinKeys relinKeys = keygen.RelinKeysLocal();
+
+            int x = 6;
             using Plaintext xPlain = new Plaintext(x.ToString());
-            Console.WriteLine($"Express x = {x} as a plaintext polynomial 0x{xPlain}.");
 
-            Ciphertext xEncrypted = new Ciphertext();
+            using Ciphertext xEncrypted = new Ciphertext();
             encryptor.Encrypt(xPlain, xEncrypted);
-            Plaintext xDecrypted = new Plaintext();
-
-            decryptor.Decrypt(xEncrypted, xDecrypted);
-            Console.WriteLine($"{xDecrypted}");
-
-            Console.WriteLine("");
-            Console.WriteLine("x^2 + 1");
             using Ciphertext xSqPlusOne = new Ciphertext();
-            evaluator.Square(xEncrypted, xSqPlusOne);
-
+            using Plaintext decryptedResult = new Plaintext();
+            using Ciphertext xPlusOneSq = new Ciphertext();
+            using Ciphertext encryptedResult = new Ciphertext();
             using Plaintext plainOne = new Plaintext("1");
-            evaluator.AddPlainInplace(xSqPlusOne, plainOne);
+            using Plaintext plainFour = new Plaintext("4");
+            /*
+            We now repeat the computation relinearizing after each multiplication.
+            */
 
-            Plaintext decryptedResult = new Plaintext();
+            Console.WriteLine("Compute and relinearize xSquared (x^2),");
+            Console.WriteLine(new string(' ', 13) + "then compute xSqPlusOne (x^2+1)");
+            using Ciphertext xSquared = new Ciphertext();
+            evaluator.Square(xEncrypted, xSquared);
+            Console.WriteLine($"    + size of xSquared: {xSquared.Size}");
+            evaluator.RelinearizeInplace(xSquared, relinKeys);
+            Console.WriteLine("    + size of xSquared (after relinearization): {0}",
+                xSquared.Size);
+            evaluator.AddPlain(xSquared, plainOne, xSqPlusOne);
+            Console.WriteLine("    + noise budget in xSqPlusOne: {0} bits",
+                decryptor.InvariantNoiseBudget(xSqPlusOne));
+            Console.Write("    + decryption of xSqPlusOne: ");
             decryptor.Decrypt(xSqPlusOne, decryptedResult);
-            Console.WriteLine($"{decryptedResult}");
+            int q = Convert.ToInt32(decryptedResult.ToString(), 16);
+            Console.WriteLine($"{q} ...... Correct.");
+            //Console.WriteLine($"0x{decryptedResult} ...... Correct.");
 
-            ////////////////////////////
 
-            int y = 6;
-            Plaintext yPlain = new Plaintext(y.ToString());
+            using Ciphertext xPlusOne = new Ciphertext();
+            Console.WriteLine("Compute xPlusOne (x+1),");
+            Console.WriteLine(new string(' ', 13) +
+                "then compute and relinearize xPlusOneSq ((x+1)^2).");
+            evaluator.AddPlain(xEncrypted, plainOne, xPlusOne);
+            evaluator.Square(xPlusOne, xPlusOneSq);
+            Console.WriteLine($"    + size of xPlusOneSq: {xPlusOneSq.Size}");
+            evaluator.RelinearizeInplace(xPlusOneSq, relinKeys);
+            Console.WriteLine("    + noise budget in xPlusOneSq: {0} bits",
+                decryptor.InvariantNoiseBudget(xPlusOneSq));
+            Console.Write("    + decryption of xPlusOneSq: ");
+            decryptor.Decrypt(xPlusOneSq, decryptedResult);
+            int r = Convert.ToInt32(decryptedResult.ToString(), 16);
+            Console.WriteLine($"{r} ...... Correct.");
 
-            Ciphertext yEncrypted = new Ciphertext();
-            encryptor.Encrypt(yPlain, yEncrypted);
-            Plaintext yDecrypted = new Plaintext();
 
-            Ciphertext addValueEncrypted = new Ciphertext();
-            evaluator.Add(yEncrypted, xEncrypted, addValueEncrypted);
-            Plaintext addValue = new Plaintext();
-            decryptor.Decrypt(addValueEncrypted, addValue);
-            Console.WriteLine("x + 6");
-            Console.WriteLine(addValue);
+            Console.WriteLine("Compute and relinearize encryptedResult (4(x^2+1)(x+1)^2).");
+            evaluator.MultiplyPlainInplace(xSqPlusOne, plainFour);
+            evaluator.Multiply(xSqPlusOne, xPlusOneSq, encryptedResult);
+            Console.WriteLine($"    + size of encryptedResult: {encryptedResult.Size}");
+            evaluator.RelinearizeInplace(encryptedResult, relinKeys);
+            Console.WriteLine("    + size of encryptedResult (after relinearization): {0}",
+                encryptedResult.Size);
+            Console.WriteLine("    + noise budget in encryptedResult: {0} bits",
+                decryptor.InvariantNoiseBudget(encryptedResult));
 
-            Ciphertext multipleValueEncrypted = new Ciphertext();
-            evaluator.Multiply(yEncrypted, xEncrypted, multipleValueEncrypted);
-            Plaintext multipleValue = new Plaintext();
-            decryptor.Decrypt(multipleValueEncrypted, multipleValue);
-            Console.WriteLine("x * 6");
-            Console.WriteLine(multipleValue);
+            Console.WriteLine();
+            Console.WriteLine("NOTE: Notice the increase in remaining noise budget.");
 
-            Plaintext plainFour = new Plaintext("4");
-            Plaintext plainValue = new Plaintext();
-            evaluator.MultiplyPlainInplace(multipleValueEncrypted, plainFour);
-            decryptor.Decrypt(multipleValueEncrypted, plainValue);
-            Console.WriteLine("x * 6 * 4 (but 4 is plaintext)");
-            Console.WriteLine(plainValue);
-            //Plaintext plainFour = new Plaintext("4");
-            //Plaintext xValue = new Plaintext();
-            //evaluator.MultiplyPlainInplace(xEncrypted, plainFour);
-            //decryptor.Decrypt(xEncrypted, xValue);
-            //Console.WriteLine("x * 4 (but 4 is plaintext)");
-            //Console.WriteLine(xValue);
+            /*
+            Relinearization clearly improved our noise consumption. We have still plenty
+            of noise budget left, so we can expect the correct answer when decrypting.
+            */
+
+            Console.WriteLine("Decrypt encrypted_result (4(x^2+1)(x+1)^2).");
+            decryptor.Decrypt(encryptedResult, decryptedResult);
+            int t = Convert.ToInt32(decryptedResult.ToString(), 16);
+            Console.WriteLine("    + decryption of 4(x^2+1)(x+1)^2 = 0x{0} ...... Correct.", t);
+
+
+            Plaintext four = new Plaintext("4");
+            Plaintext four1 = new Plaintext("5");
+            Ciphertext fourEncrypted = new Ciphertext();
+            Ciphertext four1Encrypted = new Ciphertext();
+            encryptor.Encrypt(four, fourEncrypted);
+            encryptor.Encrypt(four1, four1Encrypted);
+
+            Ciphertext d = new Ciphertext();
+            evaluator.Sub(fourEncrypted, four1Encrypted, d);
+            Plaintext temp = new Plaintext();
+            decryptor.Decrypt(d, temp);
+
+            Console.WriteLine($"{Convert.ToInt32(temp.ToString(), 16)}");
         }
     }
 }
