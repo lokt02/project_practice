@@ -16,6 +16,8 @@ using Microsoft.Research.SEAL;
 using System.Net.Sockets;
 using System.Net;
 using Mathos.Parser;
+using System.Diagnostics;
+using System.IO;
 
 namespace CloudEvaluator
 {
@@ -24,6 +26,9 @@ namespace CloudEvaluator
     /// </summary>
     public partial class MainWindow : Window
     {
+        public int j;
+        public string[] str;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -38,7 +43,8 @@ namespace CloudEvaluator
 
 
                 string m = TextBox1.Text;
-                Graf_Building(0.1, 20, m, s);
+                int scale = (int)scale_bar.Value;
+                Graf_Building(0.1, scale, m, s);
                 MessageBox.Show("clicked");
             }
             catch (Exception ex)
@@ -80,7 +86,14 @@ namespace CloudEvaluator
             string val = func + " ";
             for (double i = -Canvas.ActualWidth / 2; i <= Canvas.ActualWidth / 2; i += step)
             {
-                val += Math.Round(i, 6).ToString() + " ";
+                if (i + step <= Canvas.ActualWidth)
+                {
+                    val += Math.Round(i, 6).ToString() + " ";
+                }
+                else
+                {
+                    val += Math.Round(i, 6).ToString();
+                }
             }
             byte[] buffer = Encoding.ASCII.GetBytes(val);
             s.Send(buffer);
@@ -88,21 +101,30 @@ namespace CloudEvaluator
             byte[] buffer1 = new byte[8388608 * 2];
             s.Receive(buffer1);
 
-            string[] str = Encoding.ASCII.GetString(buffer1).Split(' ');
-            int j = 1;
+            str = Encoding.ASCII.GetString(buffer1).Split(' ');
+            j = 2;
+            Array.Resize<string>(ref str, str.Length - 1);
+
             for (double i = -Canvas.ActualWidth / 2; i <= Canvas.ActualWidth / 2; i += step)
             {
-                double f = Convert.ToDouble(str[j]);
-                j++;
-
-                if (i * m <= Canvas.ActualWidth / 2 && i * m > -Canvas.ActualWidth / 2 && f * m <= Canvas.ActualHeight / 2 && f * m > -Canvas.ActualHeight / 2)
+                double f;
+                double f1;
+                try
                 {
-                    Point p1 = new Point(i * m + Canvas.ActualWidth / 2, f * m + Canvas.ActualHeight / 2);
-                    Point p2 = new Point((i - step) * m + Canvas.ActualWidth / 2, f * m + Canvas.ActualHeight / 2);
-
-                    Lines(p2, p1);
-
+                    f = -Math.Round(Convert.ToDouble(str[j]), 4);
+                    f1 = -Math.Round(Convert.ToDouble(str[j - 1]), 4);
                 }
+                catch (Exception e)
+                {
+                    f = 0;
+                    f1 = 0;
+                }
+                j++;
+                double error = 0.2;
+                Point p1 = new Point((i + error) * m + Canvas.ActualWidth / 2, f * m + Canvas.ActualHeight / 2);
+                Point p2 = new Point((i - step + error) * m + Canvas.ActualWidth / 2, f1 * m + Canvas.ActualHeight / 2);
+
+                Lines(p2, p1);
             }
         }
 

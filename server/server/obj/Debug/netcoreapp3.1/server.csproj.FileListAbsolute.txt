@@ -1,0 +1,17 @@
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\server.exe
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\server.deps.json
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\server.runtimeconfig.json
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\server.runtimeconfig.dev.json
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\server.dll
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\server.pdb
+C:\Users\Сергей\source\repos\server\server\obj\Debug\netcoreapp3.1\server.csprojAssemblyReference.cache
+C:\Users\Сергей\source\repos\server\server\obj\Debug\netcoreapp3.1\server.AssemblyInfoInputs.cache
+C:\Users\Сергей\source\repos\server\server\obj\Debug\netcoreapp3.1\server.AssemblyInfo.cs
+C:\Users\Сергей\source\repos\server\server\obj\Debug\netcoreapp3.1\server.dll
+C:\Users\Сергей\source\repos\server\server\obj\Debug\netcoreapp3.1\server.pdb
+C:\Users\Сергей\source\repos\server\server\obj\Debug\netcoreapp3.1\server.genruntimeconfig.cache
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\sealc.dll
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\SEALNet.dll
+C:\Users\Сергей\source\repos\server\server\obj\Debug\netcoreapp3.1\server.csproj.CopyComplete
+C:\Users\Сергей\source\repos\server\server\bin\Debug\netcoreapp3.1\MathParser.dll
+C:\Users\Сергей\source\repos\server\server\obj\Debug\netcoreapp3.1\server.csproj.CoreCompileInputs.cache

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "uR+mG49RtsEk5Qr236q1XqmJ61wllfK27aMHe6phoqtII90zjyex6yK7KUnt1B3decr9aIy3ekP1KDdJNNG1yA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Сергей\\source\\repos\\server\\server\\server.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Сергей\\.nuget\\packages\\mathosparser\\2.0.0\\mathosparser.2.0.0.nupkg.sha512",
+    "C:\\Users\\Сергей\\.nuget\\packages\\microsoft.research.sealnet\\3.5.9\\microsoft.research.sealnet.3.5.9.nupkg.sha512"
+  ],
+  "logs": []
+}

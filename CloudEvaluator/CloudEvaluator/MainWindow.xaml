@@ -7,11 +7,24 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <Canvas x:Name="Canvas" Margin="192,160,10,10" MouseDown="OnCanvasClick"  Background="WhiteSmoke"/>
+        <Rectangle HorizontalAlignment="Left" Height="434" VerticalAlignment="Center" Width="192" Fill="White"/>
+        <Rectangle HorizontalAlignment="Left" Height="160" VerticalAlignment="Top" Width="608" Fill="White" Margin="192,0,0,0"/>
         <Button x:Name="Button1" Content="Suck" Click="Button1_click" HorizontalAlignment="Left" VerticalAlignment="Center" Height="54" Width="116" Margin="40,0,0,0"/>
         <TextBox x:Name="TextBox1" HorizontalAlignment="Center" Margin="0,57,0,0" Text="1/(x^2)" TextWrapping="Wrap" VerticalAlignment="Top" Width="268" Height="79"/>
         <TextBox x:Name="ServerIP" HorizontalAlignment="Left" Margin="40,57,0,0" Text="192.168.0.13" TextWrapping="Wrap" VerticalAlignment="Top" Width="187" Height="17"/>
         <TextBox x:Name="ServerPort" HorizontalAlignment="Left" Margin="40,96,0,0" Text="2022" TextWrapping="Wrap" VerticalAlignment="Top" Width="187" Height="18"/>
-        <Canvas x:Name="Canvas" Margin="192,160,10,10" MouseDown="OnCanvasClick"  Background="WhiteSmoke"/>
+
+        <ScrollBar x:Name="scale_bar" HorizontalAlignment="Left" Margin="683,40,0,0" VerticalAlignment="Top" Maximum="100" Minimum="1" Value="20" Height="98" Width="14" RenderTransformOrigin="0.5,0.5">
+            <ScrollBar.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform/>
+                    <RotateTransform Angle="90"/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </ScrollBar.RenderTransform>
+        </ScrollBar>
 
     </Grid>
 </Window>
