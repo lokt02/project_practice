@@ -76,6 +76,7 @@ namespace server
         {
             Console.WriteLine(Math.Round(x, 4).ToString().Replace(',', '.'));
             var res = func.Replace("x", "(" + Math.Round(x, 4).ToString().Replace(',', '.') + ")");
+
             MathParser parser = new MathParser();
             double p = parser.Parse(res);
             if (p < int.MaxValue)

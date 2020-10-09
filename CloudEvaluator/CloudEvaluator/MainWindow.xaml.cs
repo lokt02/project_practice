@@ -28,6 +28,7 @@ namespace CloudEvaluator
     {
         public int j;
         public string[] str;
+        public List<List<Point>> points = new List<List<Point>>();
 
         public MainWindow()
         {
@@ -41,9 +42,8 @@ namespace CloudEvaluator
             {
                 s.Connect(ServerIP.Text, Convert.ToInt32(ServerPort.Text));
 
-
                 string m = TextBox1.Text;
-                int scale = (int)scale_bar.Value;
+                int scale = (int)scale_bar.Maximum;
                 Graf_Building(0.1, scale, m, s);
                 MessageBox.Show("clicked");
             }
@@ -75,20 +75,22 @@ namespace CloudEvaluator
 
         public void Graf_Building(double step, int m, string func, Socket s)
         {
-            Canvas.Children.Clear();
-            AxisInit(m);
+            //Canvas.Children.Clear();
+            //AxisInit(m);
 
             Calculation(step, m, func, s);
         }
 
         public void Calculation(double step, int m, string func, Socket s)
         {
+            points = new List<List<Point>>();
             string val = func + " ";
             for (double i = -Canvas.ActualWidth / 2; i <= Canvas.ActualWidth / 2; i += step)
             {
                 if (i + step <= Canvas.ActualWidth)
                 {
                     val += Math.Round(i, 6).ToString() + " ";
+                    //points
                 }
                 else
                 {
@@ -103,7 +105,7 @@ namespace CloudEvaluator
 
             str = Encoding.ASCII.GetString(buffer1).Split(' ');
             j = 2;
-            Array.Resize<string>(ref str, str.Length - 1);
+            //Array.Resize<string>(ref str, str.Length - 1);
 
             for (double i = -Canvas.ActualWidth / 2; i <= Canvas.ActualWidth / 2; i += step)
             {
@@ -121,11 +123,26 @@ namespace CloudEvaluator
                 }
                 j++;
                 double error = 0.2;
-                Point p1 = new Point((i + error) * m + Canvas.ActualWidth / 2, f * m + Canvas.ActualHeight / 2);
-                Point p2 = new Point((i - step + error) * m + Canvas.ActualWidth / 2, f1 * m + Canvas.ActualHeight / 2);
 
-                Lines(p2, p1);
+                List<Point> p = new List<Point>();
+                for (int j = 0; j < m; j++)
+                {
+                    p.Add(new Point((i + error) * j + Canvas.ActualWidth / 2, f * j + Canvas.ActualHeight / 2));
+                }
+
+                points.Add(p);
             }
+        }
+
+        public void ScrollScaler(object sender, RoutedEventArgs e)
+        {
+            Canvas.Children.Clear();
+            AxisInit((int)scale_bar.Value);
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                Lines(points[i][(int)(scale_bar.Value - 1)], points[i + 1][(int)(scale_bar.Value - 1)]);
+            }
+
         }
 
         public void AxisInit(int m)
@@ -147,8 +164,8 @@ namespace CloudEvaluator
                 Line y = new Line
                 {
                     Stroke = Brushes.Red,
-                    X1 = Canvas.ActualWidth / 2 - m/5,
-                    X2 = Canvas.ActualWidth / 2 + m/5,
+                    X1 = Canvas.ActualWidth / 2 - 4,
+                    X2 = Canvas.ActualWidth / 2 + 4,
                     Y1 = i,
                     Y2 = i
                 };
@@ -160,8 +177,8 @@ namespace CloudEvaluator
                 Line y = new Line
                 {
                     Stroke = Brushes.Red,
-                    X1 = Canvas.ActualWidth / 2 - m / 5,
-                    X2 = Canvas.ActualWidth / 2 + m / 5,
+                    X1 = Canvas.ActualWidth / 2 - 4,
+                    X2 = Canvas.ActualWidth / 2 + 4,
                     Y1 = i,
                     Y2 = i
                 };
@@ -185,8 +202,8 @@ namespace CloudEvaluator
                     Stroke = Brushes.Green,
                     X1 = i,
                     X2 = i,
-                    Y1 = Canvas.ActualHeight / 2 - m / 5,
-                    Y2 = Canvas.ActualHeight / 2 + m / 5
+                    Y1 = Canvas.ActualHeight / 2 - 4,
+                    Y2 = Canvas.ActualHeight / 2 + 4
                 };
                 Canvas.Children.Add(x);
             }
@@ -198,45 +215,24 @@ namespace CloudEvaluator
                     Stroke = Brushes.Green,
                     X1 = i,
                     X2 = i,
-                    Y1 = Canvas.ActualHeight / 2 - m / 5,
-                    Y2 = Canvas.ActualHeight / 2 + m / 5
+                    Y1 = Canvas.ActualHeight / 2 - 4,
+                    Y2 = Canvas.ActualHeight / 2 + 4
                 };
                 Canvas.Children.Add(x);
             }
         }
 
-        //public double Func(double x, string func)
-        //{
-        //    var res = func.Replace("x", "(" + (Math.Round(x, 4)).ToString().Replace(',','.') + ")");
-        //    return new MathParser().Parse(res);
-        //}
-
         private void Lines(Point p1, Point p2)
         {
-            try
+            Line line = new Line
             {
-                Line line = new Line
-                {
-                    X1 = p1.X,
-                    Y1 = p1.Y,
-                    X2 = p2.X,
-                    Y2 = p2.Y,
-                    Stroke = Brushes.Black
-                };
-                Canvas.Children.Add(line);
-            }
-            catch (Exception e)
-            {
-                //Line line = new Line
-                //{
-                //    X1 = p1.X,
-                //    Y1 = -Canvas.ActualHeight,
-                //    X2 = p2.X,
-                //    Y2 = p2.Y,
-                //    Stroke = Brushes.Black
-                //};
-                //Canvas.Children.Add(line);
-            }
+                X1 = p1.X,
+                Y1 = p1.Y,
+                X2 = p2.X,
+                Y2 = p2.Y,
+                Stroke = Brushes.Black
+            };
+            Canvas.Children.Add(line);
         }
     }
 }
