@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="dependencies\**" />
+    <EmbeddedResource Remove="dependencies\**" />
+    <None Remove="dependencies\**" />
+    <Page Remove="dependencies\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MathosParser" Version="2.0.0" />
     <PackageReference Include="Microsoft.Research.SEALNet" Version="3.5.9" />
   </ItemGroup>
