@@ -15,7 +15,7 @@
         <TextBox x:Name="ServerIP" HorizontalAlignment="Left" Margin="40,57,0,0" Text="192.168.0.13" TextWrapping="Wrap" VerticalAlignment="Top" Width="187" Height="17"/>
         <TextBox x:Name="ServerPort" HorizontalAlignment="Left" Margin="40,96,0,0" Text="2022" TextWrapping="Wrap" VerticalAlignment="Top" Width="187" Height="18"/>
 
-        <ScrollBar x:Name="scale_bar" ValueChanged="ScrollScaler" HorizontalAlignment="Left" Margin="683,40,0,0" VerticalAlignment="Top" Maximum="100" Minimum="1" Value="20" Height="98" Width="14" RenderTransformOrigin="0.5,0.5">
+        <ScrollBar x:Name="scale_bar" ValueChanged="ScrollScaler" HorizontalAlignment="Left" Margin="683,40,0,0" VerticalAlignment="Top" Maximum="99" Minimum="1" Value="99" Height="98" Width="14" RenderTransformOrigin="0.5,0.5" SmallChange="1">
             <ScrollBar.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform/>

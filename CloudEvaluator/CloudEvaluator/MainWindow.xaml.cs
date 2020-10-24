@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Data;
+using System.Threading;
 
 namespace CloudEvaluator
 {
@@ -31,6 +32,8 @@ namespace CloudEvaluator
         public int j;
         public string[] str;
         public List<List<Point>> points = new List<List<Point>>();
+        public static string func;
+        public static int scale;
 
         public MainWindow()
         {
@@ -39,16 +42,11 @@ namespace CloudEvaluator
 
         public void Button1_click(object sender, RoutedEventArgs e)
         {
-            //Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
             {
-                //s.Connect(ServerIP.Text, Convert.ToInt32(ServerPort.Text));
-                TcpClient client = new TcpClient(ServerIP.Text, Convert.ToInt32(ServerPort.Text));
+                Thread thread = new Thread(new ThreadStart(StartBuild));
+                thread.Start();
 
-                string m = TextBox1.Text;
-                int scale = (int)scale_bar.Maximum;
-                Graf_Building(1, scale, m, client);
-                MessageBox.Show("loading");
             }
             catch (Exception ex)
             {
@@ -62,24 +60,31 @@ namespace CloudEvaluator
             //Graf_Building(0.01, 20, m);
         }
 
-        public void Graf_Building(double step, int m, string func, TcpClient client)
+        public void StartBuild()
         {
-            //Canvas.Children.Clear();
-            //AxisInit(m);
+            string ip = "", port = "";
+            Dispatcher.BeginInvoke(new ThreadStart(delegate { ip = ServerIP.Text; port = ServerPort.Text; }));
+            Thread.Sleep(100);
+            TcpClient client = new TcpClient(ip, Convert.ToInt32(port));
 
-            Calculation(step, m, func, client);
+            Dispatcher.BeginInvoke(new ThreadStart(delegate { func = TextBox1.Text; scale = (int)scale_bar.Maximum; }));
+            Thread.Sleep(100);
+            Calculation(1, scale, func, client);
         }
 
         public void Calculation(double step, int m, string func, TcpClient client)
         {
-            points = new List<List<Point>>();
-            //string val = func;
+            Dispatcher.BeginInvoke(new ThreadStart(delegate {
+                Canvas.Children.Clear();
+                AxisInit(m);
+            }));
 
+            points = new List<List<Point>>();
 
             EncryptionParameters parms = new EncryptionParameters(SchemeType.BFV);
             parms.PolyModulusDegree = 4096;
             parms.CoeffModulus = CoeffModulus.BFVDefault(4096);
-            parms.PlainModulus = new Modulus(4096 * 2 * 2);
+            parms.PlainModulus = new Modulus(4096);
 
 
             SEALContext context = new SEALContext(new EncryptionParameters(parms));
@@ -89,135 +94,124 @@ namespace CloudEvaluator
 
             Encryptor encryptor = new Encryptor(context, publicKey);
 
-            //Evaluator evaluator = new Evaluator(context);
-
             Decryptor decryptor = new Decryptor(context, secretKey);
 
-            //NetworkStream networkStream = new NetworkStream(s);
-
-            //MemoryStream streamEncrypted = new MemoryStream();
             MemoryStream streamParms = new MemoryStream();
             MemoryStream streamSk = new MemoryStream();
 
             secretKey.Save(streamSk);
-            parms.Save(streamParms);
-
-            List<Plaintext> data = new List<Plaintext>();
-
-            for (int i = 0; i <= (int)(Canvas.ActualWidth); i += (int)step)
-            {
-                string temp = i.ToString();
-                data.Add(new Plaintext(temp));
-            }
-
-            List<Ciphertext> dataEncrypted = new List<Ciphertext>();
-
-            for(int i = 0; i < data.Count; i++)
-            {
-                dataEncrypted.Add(new Ciphertext());
-                encryptor.Encrypt(data[i], dataEncrypted[i]);
-            }
-
-            //foreach (Ciphertext d in dataEncrypted)
-            //{
-            //    d.Save(streamEncrypted);
-            //}
-
+            parms.Save(streamParms); 
+            
             byte[] spbuff = streamParms.GetBuffer();
-            byte[] sbuff;
 
             client.Client.Send(spbuff);
+
+            byte[] count = Encoding.ASCII.GetBytes(Convert.ToInt32(Canvas.ActualWidth + step).ToString());
+            client.Client.Send(count);
 
             byte[] func_buffer = Encoding.ASCII.GetBytes(func);
             client.Client.Send(func_buffer);
 
-            byte[] count = Encoding.ASCII.GetBytes(dataEncrypted.Count.ToString());
-            client.Client.Send(count);
+            byte[] offset_buffer = Encoding.ASCII.GetBytes((0).ToString());
+            client.Client.Send(offset_buffer);
 
-            for (int i = 0; i < dataEncrypted.Count; i++)
+            int x = -(int)Canvas.ActualWidth / 2;
+            for (int i = 0; i <= (int)(Canvas.ActualWidth/step); i += 1)
             {
-                MemoryStream streamEncrypted = new MemoryStream();
-                dataEncrypted[i].Save(streamEncrypted);
-                sbuff = streamEncrypted.GetBuffer();
-                for (int j = 0; j < 100000000; j++)
+                Plaintext data = new Plaintext();
+                string temp = (i).ToString();
+                bool sign;
+                if(x >= 0)
                 {
-
+                    data = new Plaintext(x.ToString());
+                    sign = false;
                 }
+                else
+                {
+                    data = new Plaintext(Math.Abs(x).ToString());
+                    sign = true;
+                }
+
+
+                Ciphertext dataEncrypted = new Ciphertext();
+
+                encryptor.Encrypt(data, dataEncrypted);
+
+
+                byte[] sbuff;
+
+                MemoryStream streamEncrypted = new MemoryStream();
+                dataEncrypted.Save(streamEncrypted);
+                sbuff = streamEncrypted.GetBuffer();
+
                 client.Client.Send(sbuff);
                 streamEncrypted.Close();
-            }
 
-            //client.Client.Send(sbuff);
 
-            byte[] bufferRecieved = new byte[9377792 * 2];
-            dataEncrypted = new List<Ciphertext>();
-            for (int i = 0; i < data.Count; i++)
-            {
+                byte[] bufferRecieved = new byte[9377792 * 2];
+                dataEncrypted = new Ciphertext();
+
                 client.Client.Receive(bufferRecieved);
                 MemoryStream streamRecieved = new MemoryStream(bufferRecieved);
                 Ciphertext c = new Ciphertext();
                 c.Load(context, streamRecieved);
-                dataEncrypted.Add(c);
+                dataEncrypted = c;
 
-            }
-            //client.Client.Receive(bufferRecieved);
-            //MemoryStream streamRecieved = new MemoryStream(bufferRecieved);
-            //dataEncrypted = new List<Ciphertext>();
-            //foreach (var d in dataEncrypted)
-            //{
-            //    Ciphertext c = new Ciphertext();
-            //    c.Load(context, streamRecieved);
-            //    dataEncrypted.Add(c);
-            //}
-            data = new List<Plaintext>();
-            for (int i = 0; i < dataEncrypted.Count; i++)
-            {
-                data.Add(new Plaintext());
-                decryptor.Decrypt(dataEncrypted[i], data[i]);
-            }
 
-            
-            streamParms.Close();
-            streamSk.Close();
+                data = new Plaintext();
+                decryptor.Decrypt(dataEncrypted, data);
 
-            j = 2;
 
-            for (double i = 0; i <= Canvas.ActualWidth; i += step)
-            {
+
+                streamParms.Close();
+                streamSk.Close();
+
                 double f;
-                double f1;
-                try
-                {
-                    f = -Math.Round(Convert.ToDouble(data[j]), 4);
-                    f1 = -Math.Round(Convert.ToDouble(data[j - 1]), 4);
-                }
-                catch (Exception e)
-                {
-                    f = 0;
-                    f1 = 0;
-                }
-                j++;
-                double error = 0.2;
+                string t = data.ToString();
+                f = Convert.ToInt32(data.ToString(), 16);
 
                 List<Point> p = new List<Point>();
-                for (int k = 0; k < m; k++)
+                int ep = 0;
+                Dispatcher.BeginInvoke(new ThreadStart(delegate { ep = (int)scale_bar.Maximum+1; }));
+                Thread.Sleep(10);
+
+                if (sign)
                 {
-                    p.Add(new Point((i + error) * k - Canvas.ActualWidth, f * k - Canvas.ActualHeight));
+                    x = -Math.Abs(x);
+                    //f = -Math.Abs(f);
+                }
+
+                for (int k = 1; k < ep; k++)
+                {
+                    //p.Add(new Point((i - (int)Canvas.ActualWidth / 2) * k, (f + Canvas.ActualHeight / 2) * k));
+                    p.Add(new Point((x) * k + Canvas.ActualWidth/2, f * k + Canvas.ActualHeight / 2));
                 }
 
                 points.Add(p);
+
+                Dispatcher.BeginInvoke(new ThreadStart(delegate
+                {
+                    if (i > 1 && points.Count > 1 && i < points.Count)
+                    {
+                        Lines(points[i - 1][(int)(scale_bar.Value - 1)], points[i][(int)(scale_bar.Value - 1)]);
+                    }
+                }));
+
+                if (x < Canvas.ActualWidth / 2)
+                {
+                    x += (int)step;
+                }
             }
 
+            client.Client.Disconnect(true);
 
             /////
             /////
             /////
-            Canvas.Children.Clear();
-            AxisInit((int)scale_bar.Value);
-            for (int i = 0; i < points.Count - 1; i++)
-            {
-                Lines(points[i][(int)(scale_bar.Value - 1)], points[i + 1][(int)(scale_bar.Value - 1)]);
-            }
+            //for (int i = 0; i < points.Count - 1; i++)
+            //{
+            //    Lines(points[i][(int)(scale_bar.Value - 1)], points[i + 1][(int)(scale_bar.Value - 1)]);
+            //}
             /////
             /////
             /////
@@ -244,9 +238,9 @@ namespace CloudEvaluator
         {
             Canvas.Children.Clear();
             AxisInit((int)scale_bar.Value);
-            for (int i = 0; i < points.Count - 1; i++)
+            for (int i = 1; i < points.Count - 1; i++)
             {
-                Lines(points[i][(int)(scale_bar.Value - 1)], points[i + 1][(int)(scale_bar.Value - 1)]);
+                Lines(points[i - 1][(int)(scale_bar.Value - 1)], points[i][(int)(scale_bar.Value - 1)]);
             }
 
         }
